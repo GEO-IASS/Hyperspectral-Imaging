@@ -13,6 +13,7 @@ classdef processor < handle
         XRadius %Radius of graphing region on each axis
         YRadius
         gainCurve
+        binNumber
     end
     methods
     	function obj = processor()
@@ -30,6 +31,7 @@ classdef processor < handle
             obj.waveAxis = uint16(linspace(400, 720, 33));
             simpleGcurve = ones(1, 33) * 1;
             obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
+            obj.binNumber = 0;
         end
         function setTitle(obj, input)
             obj.title = input;
@@ -129,19 +131,17 @@ classdef processor < handle
             plot(obj.waveAxis, values);
             msgbox('Graph Completed')
         end
-%         function contrastSeries(obj)
-%             maximumPixel = 65534;
-%             picNumberCount = 1;
-%             while picNumberCount <= obj.picNumber
-%                 flatField = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', ...
-%                     int2str(obj.waveAxis(picNumberCount)), int2str(0)));
-%                 contrast = flatField * obj.extremeMultiplier(flatField, maximumPixel);
-%                 imwrite(contrast, defaults.defaultLocation(obj.saveLocation, obj.title, 'contrast', ...
-%                     int2str(obj.waveAxis(picNumberCount)), int2str(0)));
-%                 picNumberCount = picNumberCount + 1;
-%             end
-%             msgbox('Contrast Series Completed')
-%         end
+        function darkSeries(obj)
+            counter = 1;
+            while counter <= obj.picNumber
+               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(counter)), '0'));
+               darkimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(obj.waveAxis(counter)), '0'));
+               darksub = imsubtract(img, darkimg);
+               imwrite(darksub, defaults.defaultLocation(obj.saveLocation, obj.title, 'darksub', int2str(obj.waveAxis(counter)), '0'));
+               counter = counter + 1;
+            end
+            msgbox('Dark Subtract Series Completed')
+        end
         function flatFieldSeries(obj)
             counter = 1;
             while counter <= obj.picNumber
@@ -150,6 +150,22 @@ classdef processor < handle
                 counter = counter + 1;
             end
             msgbox('Flat Field Series Completed')
+        end
+        function binSeries(obj)
+           counter = 1;
+           while counter <= obj.picNumber
+               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(counter)), '0'));
+               darkimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(obj.waveAxis(counter)), '0'));
+               whiteimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(obj.waveAxis(counter)), '0'));
+               bin = imresize(img, 1/(2^obj.binNumber));
+               darkbin = imresize(darkimg, 1/(2^obj.binNumber));
+               whitebin = imresize(whiteimg, 1/(2^obj.binNumber));
+               imwrite(bin, defaults.defaultLocation(obj.saveLocation, obj.title, 'bin', int2str(obj.waveAxis(counter)), '0'));
+               imwrite(darkbin,defaults.defaultLocation(obj.saveLocation, obj.title, 'darkbin', int2str(obj.waveAxis(counter)), '0'));
+               imwrite(whitebin,defaults.defaultLocation(obj.saveLocation, obj.title, 'whitebin', int2str(obj.waveAxis(counter)), '0'));
+               counter = counter + 1;
+           end
+           msgbox('Binned Series Completed')
         end
         function x = getX(obj)
             x = obj.X;
@@ -164,6 +180,18 @@ classdef processor < handle
         function setY(obj, y)
             obj.Y = y;
             msgbox('Center Y Modified')
+        end
+        function value = getBinNumber(obj)
+            value = obj.binNumber;
+        end
+        function setBinNumber(obj, input)
+            if(input <= 3 && input >= 0)
+                obj.binNumber = input;
+                msgbox('Bin Number Modified')
+            else
+               errordlg('Bin Number Must be [0, 3] - Set to 0')
+               obj.binNumber = 0;
+            end
         end
         function value = getflatfieldAvgGraph(obj)
             value = obj.flatfieldAvgGraph;
@@ -219,13 +247,13 @@ classdef processor < handle
             msgbox('Gain Modified')
         end
         function flatFieldCorrection(obj, wavelength)
-            original = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(wavelength), int2str(0)));
             dark = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(wavelength), int2str(0)));
             flat = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(wavelength), int2str(0)));
+            darksub = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darksub', int2str(wavelength), int2str(0)));
             darkFlat = imsubtract(flat, dark);
             meanCalc = mean(darkFlat(:));
-            corrected1 = uint16(imdivide((uint64(meanCalc)* uint64(imsubtract(original, dark))), uint64(darkFlat)));
-            corrected2 = uint16(immultiply(uint64(imsubtract(original, dark)), mean(obj.gainCurve)));
+            corrected1 = uint16(imdivide((uint64(meanCalc)* uint64(darksub)), uint64(darkFlat)));
+            corrected2 = uint16(immultiply(uint64(darksub), mean(obj.gainCurve)));
             imwrite(corrected1, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(wavelength), int2str(0)));
             imwrite(corrected2, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(wavelength), int2str(0)));
         end
@@ -245,17 +273,5 @@ classdef processor < handle
             end
             n = uint16(average / uint64((maxX - minX + 1) * (maxY - minY + 1)));
         end
-%         function multiplier = extremeMultiplier(img, maximumPixel)
-%             maxFound = 0;
-%             multiplier = 0;
-%             if any(any(img))
-%                 while maxFound(1) ~= 1
-%                    multiplier = multiplier + defaults.contrastPrecision();
-%                    maxFound = any(any((img * multiplier) >= maximumPixel));
-%                 end
-%             else
-%                 multiplier = 1;
-%             end
-%         end
     end
 end
