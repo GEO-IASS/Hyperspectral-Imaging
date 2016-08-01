@@ -252,7 +252,7 @@ classdef processor < handle
             obj.band = value;
             msgbox('Band Modified')
         end
-        function flatFieldCorrection(obj, wavelength)
+        function flatFieldCorrection(obj)
             dark = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', int2str(0)));
             flat = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)));
             darksub = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', int2str(0)));
@@ -294,6 +294,15 @@ classdef processor < handle
                convertToCube(obj, 'white', counter);
                counter = counter + 1;
            end
+        end
+        function convertENVI(obj)
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'avg', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'darkavg', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'whiteavg', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatfield', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldAvg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatfieldAvg', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatFieldGain', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatFieldGain', '0')); 
+           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'darksub', '0')); 
         end
     end
     methods (Static)
