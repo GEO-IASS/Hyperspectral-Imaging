@@ -15,11 +15,13 @@ classdef processor < handle
         gainCurve
         binNumber
         flatfieldGainGraph
+        flatfieldGraph
         band
     end
     methods
     	function obj = processor()
             obj.band = 550;
+            obj.flatfieldGraph = 0;
             obj.avgNumber = 2;
             obj.saveLocation = 'C:/';
             obj.title = 'test';
@@ -108,12 +110,14 @@ classdef processor < handle
             values = zeros(1, obj.picNumber);
             if obj.originalGraph == 1
                 img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', int2str(0)));
+            elseif obj.flatfieldGraph == 1
+                img = load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
             elseif obj.flatfieldAvgGraph == 1
                 img = load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)));
             elseif obj.flatfieldGainGraph == 1
                 img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)));
             else
-                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
+                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'corrected', int2str(0)));
             end
             counter;
             while counter <= obj.picNumber
@@ -201,6 +205,13 @@ classdef processor < handle
             obj.flatfieldAvgGraph = value;
             msgbox('Flatfield Average Graphing Modified')
         end
+        function value = getFlatfieldGraph(obj)
+            value = obj.flatfieldGraph;
+        end
+        function setFlatfieldGraph(obj, value)
+            obj.flatfieldGraph = value;
+            msgbox('Flatfield Graphing Modified')
+        end
         function setFlatfieldGainGraph(obj, value)
             obj.flatfieldGainGraph = value;
             msgbox('Flatfield Gain Graphing Modified')
@@ -267,7 +278,10 @@ classdef processor < handle
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)), corrected2);
         end
         function colorCorrect(obj)
-           %Add
+           %Add Proper Color Correction
+           img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'corrected', int2str(0)), img);
+           msgbox('Color Correction Completed')
         end
         function imgDisplay(obj)
             img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.band), int2str(0)));
