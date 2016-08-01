@@ -7,8 +7,11 @@ classdef defaults
 			value = 1;
 		end
 		function file = defaultLocation(location, title, setType, wavelength, setNum)
-		file = [location, title, '-', setType, '-', ...
-            wavelength, '-', setNum, '.tif'];
+            file = [location, title, '-', setType, '-', ...
+                wavelength, '-', setNum, '.tif'];
+        end
+        function file = cubeLocation(location, title, setType, setNum)
+            file = [location, title, '-', setType, '-', setNum, '.m'];
         end
         function answer = closestFactor(totalIntervalSize, appxFactor)
             answer = 0;

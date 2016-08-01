@@ -14,15 +14,19 @@ classdef processor < handle
         YRadius
         gainCurve
         binNumber
+        flatfieldGainGraph
+        band
     end
     methods
     	function obj = processor()
+            obj.band = 550;
             obj.avgNumber = 2;
             obj.saveLocation = 'C:/';
             obj.title = 'test';
             obj.picNumber = 33;
             obj.originalGraph = 0;
             obj.flatfieldAvgGraph = 0;
+            obj.flatfieldGainGraph = 0;
             obj.percentGraph = 0;
             obj.X = 1;
             obj.Y = 1;
@@ -117,6 +121,8 @@ classdef processor < handle
                     img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(wavelength)), int2str(0)));
                 elseif obj.flatfieldAvgGraph == 1
                     img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(obj.waveAxis(wavelength)), int2str(0)));
+                elseif obj.flatfieldGainGraph == 1
+                    img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(obj.waveAxis(wavelength)), int2str(0)));
                 else
                     img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.waveAxis(wavelength)), int2str(0)));
                 end
@@ -196,6 +202,9 @@ classdef processor < handle
         function value = getflatfieldAvgGraph(obj)
             value = obj.flatfieldAvgGraph;
         end
+        function value = getflatfieldGainGraph(obj)
+            value = obj.flatfieldAvgGraph;
+        end
         function value = getPercentGraph(obj)
             value = obj.percentGraph;
         end
@@ -206,6 +215,10 @@ classdef processor < handle
             obj.flatfieldAvgGraph = value;
             msgbox('Flatfield Average Graphing Modified')
         end
+        function setFlatfieldGainGraph(obj, value)
+            obj.flatfieldGainGraph = value;
+            msgbox('Flatfield Gain Graphing Modified')
+        end        
         function setOriginalGraph(obj, value)
             obj.originalGraph = value;
             msgbox('Original-Graphing Modified')
@@ -246,6 +259,13 @@ classdef processor < handle
             obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
             msgbox('Gain Modified')
         end
+        function value = getBand(obj)
+            value = obj.band;
+        end
+        function setBand(obj, value)
+            obj.band = value;
+            msgbox('Band Modified')
+        end
         function flatFieldCorrection(obj, wavelength)
             dark = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(wavelength), int2str(0)));
             flat = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(wavelength), int2str(0)));
@@ -254,8 +274,39 @@ classdef processor < handle
             meanCalc = mean(darkFlat(:));
             corrected1 = uint16(imdivide((uint64(meanCalc)* uint64(darksub)), uint64(darkFlat)));
             corrected2 = uint16(immultiply(uint64(darksub), mean(obj.gainCurve)));
+            corrected3 = uint16(imdivide(uint64(darksub), uint64(darkFlat)));
+            imwrite(corrected3, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(wavelength), int2str(0)));
             imwrite(corrected1, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(wavelength), int2str(0)));
-            imwrite(corrected2, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(wavelength), int2str(0)));
+            imwrite(corrected2, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(wavelength), int2str(0)));
+        end
+        function colorCorrect(obj)
+           %Add
+        end
+        function imgDisplay(obj)
+            img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.band), int2str(0)));
+            axes(handles.graphAxes), cla;
+            imagesc(img), colormap (gray)
+            axis image;
+        end
+        function convertToCube(obj, setType, setNum)
+           counter = 1;
+           cube = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType, int2str(obj.waveAxis(counter)), int2str(setNum)));
+           counter = 2;
+           while counter < obj.picNumber
+               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType', int2str(obj.waveAxis(counter)), int2str(setNum)));
+               cube = cat(3, cube, img);
+               counter = counter + 1;
+           end
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, setType, int2str(setNum)), cube);
+        end
+        function convertCube(obj)
+           counter = 1;
+           while counter < obj.avgNumber
+               convertToCube(obj, 'reg', counter);
+               convertToCube(obj, 'dark', counter);
+               convertToCube(obj, 'white', counter);
+               counter = counter + 1;
+           end
         end
     end
     methods (Static)
