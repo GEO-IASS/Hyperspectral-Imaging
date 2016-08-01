@@ -93,46 +93,36 @@ classdef processor < handle
             msgbox('Series Averaging Completed')
         end
         function photoAvg(obj, picType, newType)
-            setCounter = 1;
-            picNumberCount = 1;
-            while picNumberCount <= obj.picNumber
-                avgSet = imread(defaults.defaultLocation(obj.saveLocation, obj.title, ...
-                    picType, int2str(obj.waveAxis(picNumberCount)), int2str(setCounter)));
-                avgSet = uint64(avgSet);
-                setCounter = 2;
-                while setCounter <= obj.avgNumber
-                    addon = imread(defaults.defaultLocation(obj.saveLocation, obj.title, picType, ...
-                        int2str(obj.waveAxis(picNumberCount)), int2str(setCounter)));
-                    avgSet = avgSet + uint64(addon);
-                    setCounter = setCounter + 1;
-                end
-                setCounter = 1;
-                avgSet = avgSet / obj.avgNumber;
-                imwrite(uint16(avgSet), defaults.defaultLocation(obj.saveLocation, obj.title, ...
-                    newType, int2str(obj.waveAxis(picNumberCount)), int2str(0)));
-                picNumberCount = picNumberCount + 1;
+            counter = 1;
+            img = load(defaults.cubeLocation(obj.location, obj.title, picType, int2str(counter)));
+            counter = 2;
+            while counter < obj.avgNumber
+                add = load(defaults.cubeLocation(obj.location, obj.title, picType, int2str(counter)));
+                img = uint64(img) + uint64(add);
+                counter = counter + 1;
             end
+            img = uint16(img/obj.avgNumber);
+            save(defaults.cubeLocation(obj.location, obj.title, newType, '0'), img);
         end
         function graph(obj)
-            wavelength = 1;
             values = zeros(1, obj.picNumber);
-            while wavelength <= obj.picNumber
-                if obj.originalGraph == 1
-                    img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(wavelength)), int2str(0)));
-                elseif obj.flatfieldAvgGraph == 1
-                    img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(obj.waveAxis(wavelength)), int2str(0)));
-                elseif obj.flatfieldGainGraph == 1
-                    img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(obj.waveAxis(wavelength)), int2str(0)));
-                else
-                    img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.waveAxis(wavelength)), int2str(0)));
-                end
-                values(wavelength) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, img);
+            if obj.originalGraph == 1
+                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', int2str(0)));
+            elseif obj.flatfieldAvgGraph == 1
+                img = load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)));
+            elseif obj.flatfieldGainGraph == 1
+                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)));
+            else
+                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
+            end
+            counter;
+            while counter <= obj.picNumber
+                values(counter) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, img(:, :, counter));
                 if obj.percentGraph
-                    whiteReference = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(obj.waveAxis(wavelength)), int2str(0)));
-                    values(wavelength) = uint16((uint64(values(wavelength)) * uint64(100))/uint64(processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, ...
-                        obj.X + obj.XRadius, obj.Y + obj.YRadius, whiteReference)));
+                    whiteReference = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)));
+                    values(counter) = uint16((uint64(values(counter)) * uint64(100))/uint64(processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, ...
+                        obj.X + obj.XRadius, obj.Y + obj.YRadius, whiteReference(:, :, counter))));
                 end
-                wavelength = wavelength + 1;
             end
             plot(obj.waveAxis, values);
             msgbox('Graph Completed')
@@ -140,10 +130,10 @@ classdef processor < handle
         function darkSeries(obj)
             counter = 1;
             while counter <= obj.picNumber
-               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(counter)), '0'));
-               darkimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(obj.waveAxis(counter)), '0'));
-               darksub = imsubtract(img, darkimg);
-               imwrite(darksub, defaults.defaultLocation(obj.saveLocation, obj.title, 'darksub', int2str(obj.waveAxis(counter)), '0'));
+               img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'));
+               darkimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'));
+               darksub = img - darkimg;
+               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), darksub);
                counter = counter + 1;
             end
             msgbox('Dark Subtract Series Completed')
@@ -158,19 +148,15 @@ classdef processor < handle
             msgbox('Flat Field Series Completed')
         end
         function binSeries(obj)
-           counter = 1;
-           while counter <= obj.picNumber
-               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'avg', int2str(obj.waveAxis(counter)), '0'));
-               darkimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(obj.waveAxis(counter)), '0'));
-               whiteimg = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(obj.waveAxis(counter)), '0'));
-               bin = imresize(img, 1/(2^obj.binNumber));
-               darkbin = imresize(darkimg, 1/(2^obj.binNumber));
-               whitebin = imresize(whiteimg, 1/(2^obj.binNumber));
-               imwrite(bin, defaults.defaultLocation(obj.saveLocation, obj.title, 'bin', int2str(obj.waveAxis(counter)), '0'));
-               imwrite(darkbin,defaults.defaultLocation(obj.saveLocation, obj.title, 'darkbin', int2str(obj.waveAxis(counter)), '0'));
-               imwrite(whitebin,defaults.defaultLocation(obj.saveLocation, obj.title, 'whitebin', int2str(obj.waveAxis(counter)), '0'));
-               counter = counter + 1;
-           end
+           img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'));
+           darkimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'));
+           whiteimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'));
+           bin = imresize(img, 1/(2^obj.binNumber));
+           darkbin = imresize(darkimg, 1/(2^obj.binNumber));
+           whitebin = imresize(whiteimg, 1/(2^obj.binNumber));
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'bin', '0'), bin);
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'), darkbin);
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'), whitebin);
            msgbox('Binned Series Completed')
         end
         function x = getX(obj)
@@ -267,17 +253,18 @@ classdef processor < handle
             msgbox('Band Modified')
         end
         function flatFieldCorrection(obj, wavelength)
-            dark = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darkavg', int2str(wavelength), int2str(0)));
-            flat = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(wavelength), int2str(0)));
-            darksub = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'darksub', int2str(wavelength), int2str(0)));
-            darkFlat = imsubtract(flat, dark);
-            meanCalc = mean(darkFlat(:));
-            corrected1 = uint16(imdivide((uint64(meanCalc)* uint64(darksub)), uint64(darkFlat)));
-            corrected2 = uint16(immultiply(uint64(darksub), mean(obj.gainCurve)));
-            corrected3 = uint16(imdivide(uint64(darksub), uint64(darkFlat)));
-            imwrite(corrected3, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(wavelength), int2str(0)));
-            imwrite(corrected1, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(wavelength), int2str(0)));
-            imwrite(corrected2, defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(wavelength), int2str(0)));
+            dark = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', int2str(0)));
+            flat = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)));
+            darksub = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', int2str(0)));
+            darkFlat = flat - dark;
+            meanCalc = mean(mean(darkFlat));
+            meanCalc = repmat(meanCalc, 520, 696);
+            corrected1 = uint16((uint64(meanCalc) .* uint64(darksub)) ./ uint64(darkFlat));
+            corrected2 = uint16(uint64(darksub) * mean(obj.gainCurve));
+            corrected3 = uint16(uint64(darksub) ./ uint64(darkFlat));
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)), corrected3);
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)), corrected1);
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)), corrected2);
         end
         function colorCorrect(obj)
            %Add
@@ -292,7 +279,7 @@ classdef processor < handle
            counter = 1;
            cube = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType, int2str(obj.waveAxis(counter)), int2str(setNum)));
            counter = 2;
-           while counter < obj.picNumber
+           while counter <= obj.picNumber
                img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType', int2str(obj.waveAxis(counter)), int2str(setNum)));
                cube = cat(3, cube, img);
                counter = counter + 1;
@@ -301,7 +288,7 @@ classdef processor < handle
         end
         function convertCube(obj)
            counter = 1;
-           while counter < obj.avgNumber
+           while counter <= obj.avgNumber
                convertToCube(obj, 'reg', counter);
                convertToCube(obj, 'dark', counter);
                convertToCube(obj, 'white', counter);
