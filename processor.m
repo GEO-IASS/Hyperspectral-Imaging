@@ -150,18 +150,14 @@ classdef processor < handle
             msgbox('Dark Subtract Series Completed')
         end
         function flatFieldSeries(obj)
-            counter = 1;
-            while counter <= obj.picNumber
-                white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'));
-                trueLight = max(max(white(:, :, counter)));
-                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'));
-                reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'));
-                img(:, :, counter) = uint16(uint64(img(:, :, counter)) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white(:, :, counter)));
-                reflect(:, :, counter) = uint16(uint64(reflect(:, :, counter)) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white(:, :, counter)));
-                imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), img);
-                imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), reflect);
-                counter = counter + 1;
-            end
+            img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'));
+            reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'));
+            white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'));
+            trueLight = repmat(max(max(white)), 520, 696);
+            img = uint16(uint64(img) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white));
+            reflect = uint16(uint64(reflect) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white));
+            imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), img);
+            imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), reflect);
             msgbox('Flat Field Series Completed')
         end
         function binSeries(obj)
@@ -277,9 +273,10 @@ classdef processor < handle
             msgbox('Band Modified')
         end
         function colorCorrect(obj)
-           %Add Proper Color Correction
            img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'corrected', int2str(0)), img);
+           reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', int2str(0)));
+           img = uint16(uint64(img) * 0.99 / uint64(reflect));
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), img);
            msgbox('Color Correction Completed')
         end
         function imgDisplay(obj)
