@@ -91,7 +91,8 @@ classdef processor < handle
         function avgProduction(obj)
     		obj.photoAvg('reg', 'avg');
             obj.photoAvg('dark', 'darkavg');
-            obj.photoAvg('white', 'whiteavg')
+            obj.photoAvg('white', 'whiteavg');
+            obj.photoAvg('reflect', 'reflectavg');
             msgbox('Series Averaging Completed')
         end
         function photoAvg(obj, picType, newType)
@@ -136,8 +137,14 @@ classdef processor < handle
             while counter <= obj.picNumber
                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'));
                darkimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'));
+               white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'));
+               reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectavg', '0'));
                darksub = img - darkimg;
+               darkwhite = white - darkimg;
+               darkreflect = reflect - darkimg;
                imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), darksub);
+               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'), darkwhite);
+               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), darkreflect);
                counter = counter + 1;
             end
             msgbox('Dark Subtract Series Completed')
@@ -145,8 +152,14 @@ classdef processor < handle
         function flatFieldSeries(obj)
             counter = 1;
             while counter <= obj.picNumber
-                wavelength = obj.waveAxis(counter);
-                obj.flatFieldCorrection(wavelength);
+                white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'));
+                trueLight = max(max(white(:, :, counter)));
+                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'));
+                reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'));
+                img(:, :, counter) = uint16(uint64(img(:, :, counter)) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white(:, :, counter)));
+                reflect(:, :, counter) = uint16(uint64(reflect(:, :, counter)) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white(:, :, counter)));
+                imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), img);
+                imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), reflect);
                 counter = counter + 1;
             end
             msgbox('Flat Field Series Completed')
@@ -262,20 +275,6 @@ classdef processor < handle
         function setBand(obj, value)
             obj.band = value;
             msgbox('Band Modified')
-        end
-        function flatFieldCorrection(obj)
-            dark = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', int2str(0)));
-            flat = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)));
-            darksub = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', int2str(0)));
-            darkFlat = flat - dark;
-            meanCalc = mean(mean(darkFlat));
-            meanCalc = repmat(meanCalc, 520, 696);
-            corrected1 = uint16((uint64(meanCalc) .* uint64(darksub)) ./ uint64(darkFlat));
-            corrected2 = uint16(uint64(darksub) * mean(obj.gainCurve));
-            corrected3 = uint16(uint64(darksub) ./ uint64(darkFlat));
-            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)), corrected3);
-            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)), corrected1);
-            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)), corrected2);
         end
         function colorCorrect(obj)
            %Add Proper Color Correction

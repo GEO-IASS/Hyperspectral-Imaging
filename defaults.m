@@ -16,6 +16,9 @@ classdef defaults
         function file = ENVILocation(location, title, setType, setNum)
             file = [location, title, '-', setType, '-', setNum, '.hdr'];
         end
+        function value = flatConstant()
+            value = 1;
+        end
         function answer = closestFactor(totalIntervalSize, appxFactor)
             answer = 0;
             counter = 1;
