@@ -11,13 +11,16 @@ classdef defaults
                 wavelength, '-', setNum, '.tif'];
         end
         function file = cubeLocation(location, title, setType, setNum)
-            file = [location, title, '-', setType, '-', setNum, '.m'];
+            file = [location, title, '-', setType, '-', setNum, '.mat'];
         end
         function file = ENVILocation(location, title, setType, setNum)
-            file = [location, title, '-', setType, '-', setNum, '.hdr'];
+            file = [location, title, '-', setType, '-', setNum];
         end
         function value = flatConstant()
             value = 1;
+        end
+        function value = stdReflectance()
+           value = 0.99; 
         end
         function answer = closestFactor(totalIntervalSize, appxFactor)
             answer = 0;

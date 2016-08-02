@@ -75,7 +75,7 @@ classdef scanner < handle
             elseif isnan(gain)
                 errordlg('Gain value must be a number')
             elseif gain < 0 || gain > 30
-                errordlg('Gain value must be within 0 to 1000 ms inclusive.')
+                errordlg('Gain value must be within 0 to 30 inclusive.')
             else
                 obj.camera.setGain(gain);
                 if obj.constantSettings

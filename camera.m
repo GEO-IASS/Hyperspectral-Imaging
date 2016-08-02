@@ -7,8 +7,8 @@ classdef camera < handle
     end
     methods
         function obj = camera()
-            obj.gain = 10;
-            obj.exposure = 500;
+            obj.gain = 0;
+            obj.exposure = 900;
             obj.power = 0;
             obj.cam = 0;
         end

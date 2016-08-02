@@ -6,15 +6,15 @@ classdef processor < handle
         picNumber %Number of pictures per set
         X %Graphing square center
         Y
-        flatfieldAvgGraph %Graph flatfielded set instead of contrast set
-        percentGraph
+%         flatfieldAvgGraph %Graph flatfielded set instead of contrast set
+%         percentGraph
         originalGraph %Graph original set instead of contrast set
         waveAxis %Wavelength array
         XRadius %Radius of graphing region on each axis
         YRadius
-        gainCurve
+%         gainCurve
         binNumber
-        flatfieldGainGraph
+%         flatfieldGainGraph
         flatfieldGraph
         band
     end
@@ -27,16 +27,16 @@ classdef processor < handle
             obj.title = 'test';
             obj.picNumber = 33;
             obj.originalGraph = 0;
-            obj.flatfieldAvgGraph = 0;
-            obj.flatfieldGainGraph = 0;
-            obj.percentGraph = 0;
+%             obj.flatfieldAvgGraph = 0;
+%             obj.flatfieldGainGraph = 0;
+%             obj.percentGraph = 0;
             obj.X = 1;
             obj.Y = 1;
             obj.XRadius = 0;
             obj.YRadius = 0;
             obj.waveAxis = uint16(linspace(400, 720, 33));
-            simpleGcurve = ones(1, 33) * 1;
-            obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
+%             simpleGcurve = ones(1, 33) * 1;
+%             obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
             obj.binNumber = 0;
         end
         function setTitle(obj, input)
@@ -97,79 +97,76 @@ classdef processor < handle
         end
         function photoAvg(obj, picType, newType)
             counter = 1;
-            img = load(defaults.cubeLocation(obj.location, obj.title, picType, int2str(counter)));
+            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, picType, int2str(counter)))));
             counter = 2;
-            while counter < obj.avgNumber
-                add = load(defaults.cubeLocation(obj.location, obj.title, picType, int2str(counter)));
+            while counter <= obj.avgNumber
+                add = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, picType, int2str(counter)))));
                 img = uint64(img) + uint64(add);
                 counter = counter + 1;
             end
-            img = uint16(img/obj.avgNumber);
-            save(defaults.cubeLocation(obj.location, obj.title, newType, '0'), img);
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, newType, '0'), 'img');
         end
         function graph(obj)
             values = zeros(1, obj.picNumber);
             if obj.originalGraph == 1
-                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', int2str(0)));
+                img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', int2str(0)))));
             elseif obj.flatfieldGraph == 1
-                img = load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
-            elseif obj.flatfieldAvgGraph == 1
-                img = load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)));
-            elseif obj.flatfieldGainGraph == 1
-                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)));
+                img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)))));
+%             elseif obj.flatfieldAvgGraph == 1
+%                 img = cell2mat(struct2cell(load(defaults.cubetLocation(obj.saveLocation, obj.title, 'flatfieldAvg', int2str(0)))));
+%             elseif obj.flatfieldGainGraph == 1
+%                 img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldGain', int2str(0)))));
             else
-                img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'corrected', int2str(0)));
+                img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)))));
             end
-            counter;
+            counter = 1;
             while counter <= obj.picNumber
                 values(counter) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, img(:, :, counter));
-                if obj.percentGraph
-                    whiteReference = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)));
-                    values(counter) = uint16((uint64(values(counter)) * uint64(100))/uint64(processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, ...
-                        obj.X + obj.XRadius, obj.Y + obj.YRadius, whiteReference(:, :, counter))));
-                end
+%                 if obj.percentGraph
+%                     whiteReference = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', int2str(0)))));
+%                     values(counter) = uint16((uint64(values(counter)) * uint64(100))/uint64(processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, ...
+%                         obj.X + obj.XRadius, obj.Y + obj.YRadius, whiteReference(:, :, counter))));
+%                 end
+                counter = counter + 1;
             end
             plot(obj.waveAxis, values);
             msgbox('Graph Completed')
         end
         function darkSeries(obj)
-            counter = 1;
-            while counter <= obj.picNumber
-               img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'));
-               darkimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'));
-               white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'));
-               reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectavg', '0'));
-               darksub = img - darkimg;
-               darkwhite = white - darkimg;
-               darkreflect = reflect - darkimg;
-               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), darksub);
-               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'), darkwhite);
-               imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), darkreflect);
-               counter = counter + 1;
-            end
-            msgbox('Dark Subtract Series Completed')
+           counter = 1;
+           img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'))));
+           darkimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'))));
+           white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'))));
+           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectavg', '0'))));
+           darksub = img - darkimg;
+           darkwhite = white - darkimg;
+           darkreflect = reflect - darkimg;
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), 'darksub');
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'), 'darkwhite');
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), 'darkreflect');
+           msgbox('Dark Subtract Series Completed')
         end
         function flatFieldSeries(obj)
-            img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'));
-            reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'));
-            white = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'));
+            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'))));
+            reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
+            white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'))));
             trueLight = repmat(max(max(white)), 520, 696);
-            img = uint16(uint64(img) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white));
-            reflect = uint16(uint64(reflect) * uint64(trueLight) * uint64(defaults.flatConstant()) / uint64(white));
-            imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), img);
-            imwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), reflect);
+            img = uint16(uint64(img) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
+            reflect = uint16(uint64(reflect) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), 'img');
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), 'reflect');
             msgbox('Flat Field Series Completed')
         end
         function binSeries(obj)
-           img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'));
-           darkimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'));
-           whiteimg = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'));
+           img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'))));
+           darkimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'))));
+           whiteimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'))));
            bin = imresize(img, 1/(2^obj.binNumber));
            darkbin = imresize(darkimg, 1/(2^obj.binNumber));
            whitebin = imresize(whiteimg, 1/(2^obj.binNumber));
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'bin', '0'), bin);
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'), darkbin);
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'), whitebin);
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'bin', '0'), 'bin');
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'), 'darkbin');
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'), 'whitebin');
            msgbox('Binned Series Completed')
         end
         function x = getX(obj)
@@ -198,22 +195,22 @@ classdef processor < handle
                obj.binNumber = 0;
             end
         end
-        function value = getflatfieldAvgGraph(obj)
-            value = obj.flatfieldAvgGraph;
-        end
-        function value = getflatfieldGainGraph(obj)
-            value = obj.flatfieldAvgGraph;
-        end
-        function value = getPercentGraph(obj)
-            value = obj.percentGraph;
-        end
+%         function value = getflatfieldAvgGraph(obj)
+%             value = obj.flatfieldAvgGraph;
+%         end
+%         function value = getflatfieldGainGraph(obj)
+%             value = obj.flatfieldAvgGraph;
+%         end
+%         function value = getPercentGraph(obj)
+%             value = obj.percentGraph;
+%         end
         function value = getOriginalGraph(obj)
             value = obj.originalGraph;
         end
-        function setFlatfieldAvgGraph(obj, value)
-            obj.flatfieldAvgGraph = value;
-            msgbox('Flatfield Average Graphing Modified')
-        end
+%         function setFlatfieldAvgGraph(obj, value)
+%             obj.flatfieldAvgGraph = value;
+%             msgbox('Flatfield Average Graphing Modified')
+%         end
         function value = getFlatfieldGraph(obj)
             value = obj.flatfieldGraph;
         end
@@ -221,18 +218,18 @@ classdef processor < handle
             obj.flatfieldGraph = value;
             msgbox('Flatfield Graphing Modified')
         end
-        function setFlatfieldGainGraph(obj, value)
-            obj.flatfieldGainGraph = value;
-            msgbox('Flatfield Gain Graphing Modified')
-        end        
+%         function setFlatfieldGainGraph(obj, value)
+%             obj.flatfieldGainGraph = value;
+%             msgbox('Flatfield Gain Graphing Modified')
+%         end        
         function setOriginalGraph(obj, value)
             obj.originalGraph = value;
             msgbox('Original-Graphing Modified')
         end
-        function setPercentGraph(obj, value)
-            obj.percentGraph = value;
-            msgbox('Percent-Graphing Modified')
-        end
+%         function setPercentGraph(obj, value)
+%             obj.percentGraph = value;
+%             msgbox('Percent-Graphing Modified')
+%         end
         function setXRadius(obj, value)
             if value < 0
                 errordlg('Value must be >= 0, set to 0')
@@ -257,14 +254,14 @@ classdef processor < handle
         function value = getYRadius(obj)
             value = obj.YRadius;
         end
-        function value = getGain(obj)
-            value = mean(obj.gainCurve);
-        end
-        function setGain(obj, value)
-            simpleGcurve = ones(1, 33) * value;
-            obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
-            msgbox('Gain Modified')
-        end
+%         function value = getGain(obj)
+%             value = mean(obj.gainCurve);
+%         end
+%         function setGain(obj, value)
+%             simpleGcurve = ones(1, 33) * value;
+%             obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
+%             msgbox('Gain Modified')
+%         end
         function value = getBand(obj)
             value = obj.band;
         end
@@ -273,28 +270,34 @@ classdef processor < handle
             msgbox('Band Modified')
         end
         function colorCorrect(obj)
-           img = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)));
-           reflect = load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', int2str(0)));
-           img = uint16(uint64(img) * 0.99 / uint64(reflect));
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), img);
+           img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)))));
+           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', int2str(0)))));
+           reflectVal = zeros(obj.picNumber);
+           counter = 1;
+           while counter <= obj.picNumber
+               reflectVal(counter) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, reflect(:, :, counter));
+               img(:, :, counter) = uint16(uint64(img(:, :, counter)) * defaults.stdReflectance() / uint64(reflectVal(counter)));
+               counter = counter + 1;
+           end
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), 'img');
            msgbox('Color Correction Completed')
         end
-        function imgDisplay(obj)
-            img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.band), int2str(0)));
-            axes(handles.graphAxes), cla;
-            imagesc(img), colormap (gray)
-            axis image;
-        end
+%         function imageDisplay(obj)
+%             img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, 'flatfield', int2str(obj.band), int2str(0)));
+%             axes(handles.graphAxes), cla;
+%             imagesc(img), colormap (gray)
+%             axis image;
+%         end
         function convertToCube(obj, setType, setNum)
            counter = 1;
            cube = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType, int2str(obj.waveAxis(counter)), int2str(setNum)));
            counter = 2;
            while counter <= obj.picNumber
-               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType', int2str(obj.waveAxis(counter)), int2str(setNum)));
+               img = imread(defaults.defaultLocation(obj.saveLocation, obj.title, setType, int2str(obj.waveAxis(counter)), int2str(setNum)));
                cube = cat(3, cube, img);
                counter = counter + 1;
            end
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, setType, int2str(setNum)), cube);
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, setType, int2str(setNum)), 'cube');
         end
         function convertCube(obj)
            counter = 1;
@@ -302,17 +305,30 @@ classdef processor < handle
                convertToCube(obj, 'reg', counter);
                convertToCube(obj, 'dark', counter);
                convertToCube(obj, 'white', counter);
+               convertToCube(obj, 'reflect', counter);
                counter = counter + 1;
            end
+           msgbox('Data Converted to .mat Data Cubes')
         end
         function convertENVI(obj)
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'avg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'avg', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkavg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'darkavg', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'whiteavg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'whiteavg', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatfield', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfieldAvg', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatfieldAvg', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatFieldGain', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'flatFieldGain', '0')); 
-           enviwrite(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), defaults.ENVILocation(obj.saveLocation, obj.title, 'darksub', '0')); 
+           obj.ENVI('avg');
+           obj.ENVI('darkavg');
+           obj.ENVI('whiteavg');
+           obj.ENVI('reflectavg');
+           obj.ENVI('bin');
+           obj.ENVI('whitebin');
+           obj.ENVI('darkbin');
+           obj.ENVI('flatfield');
+           obj.ENVI('flatreflect');
+           obj.ENVI('correct');
+           obj.ENVI('darkwhite');
+           obj.ENVI('darkreflect');
+           obj.ENVI('darksub');
+           msgbox('Data Cubes Converted to ENVI')
+        end
+        function ENVI(obj, imgType)
+           file = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, imgType, '0'))));
+           enviwrite(file, defaults.ENVILocation(obj.saveLocation, obj.title, imgType, '0'));
         end
     end
     methods (Static)
