@@ -67,25 +67,26 @@ classdef processor < handle
         function avgNumber = getAvgNumber(obj)
             avgNumber = obj.avgNumber;
         end
-        function setPicNumber(obj, picNumber)
-            if (320/double(picNumber - 1)) == round((320/double(picNumber - 1)))
-                obj.picNumber = picNumber;
+        function setPicNumber(obj, step)
+            if (320/double(step)) == round((320/double(step)))
+                obj.picNumber = 1 + (320/step);
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
-                msgbox('Picture Number Modified')
+                msgbox('Wavelength Step Modified')
             else
                 msgbox('Cannot Modify, Rounding to Closest Interval')
-                obj.picNumber = defaults.closestFactor(320, picNumber - 1) + 1;
+                step = defaults.closestFactor(320, step);
+                obj.picNumber = (320/step) + 1;
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
-                msgbox(['Picture Number Modified:', int2str(obj.picNumber)])
+                msgbox(['Wavelength Step Modified:', int2str(step)])
             end
         end
         function picNumber = getPicNumber(obj)
             picNumber = obj.picNumber;
         end
-        function displaySettings(obj)
-            msgbox({['Number: ' num2str(obj.picNumber)]; ...
-                ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
-        end
+%         function displaySettings(obj)
+%             msgbox({['Number: ' num2str(obj.picNumber)]; ...
+%                 ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
+%         end
         function avgProduction(obj)
     		obj.photoAvg('reg', 'avg');
             obj.photoAvg('dark', 'darkavg');
@@ -99,9 +100,10 @@ classdef processor < handle
             counter = 2;
             while counter <= obj.avgNumber
                 add = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, picType, int2str(counter)))));
-                img = uint64(img) + uint64(add);
+                img = double(img) + double(add);
                 counter = counter + 1;
             end
+            img = double(img) / double(obj.avgNumber);
             save(defaults.cubeLocation(obj.saveLocation, obj.title, newType, '0'), 'img');
         end
         function graph(obj)
@@ -114,8 +116,9 @@ classdef processor < handle
                 img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)))));
             end
             counter = 1;
+            binAmount = 1.0/(2 ^ obj.binNumber);
             while counter <= obj.picNumber
-                values(counter) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, img(:, :, counter));
+                values(counter) = obj.rectanglePixelAvg((obj.X - obj.XRadius), (obj.Y - obj.YRadius), (obj.X + obj.XRadius), (obj.Y + obj.YRadius), img(:, :, counter));
                 counter = counter + 1;
             end
             plot(obj.waveAxis, values);
@@ -139,11 +142,11 @@ classdef processor < handle
             %reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
             white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'))));
             trueLight = repmat(max(max(white)), 520 * double(1.0/(2^obj.binNumber)), 696 *  double(1.0/(2^obj.binNumber)));
-            size(trueLight)
-            img = uint16(uint64(img) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
+            img = double(double(img) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
+            white = double(double(white) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
             %reflect = uint16(uint64(reflect) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), 'img');
-            %save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatreflect', '0'), 'reflect');
+            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatwhite', '0'), 'white');
             msgbox('Flat Field Series Completed')
         end
         function binSeries(obj)
@@ -239,12 +242,16 @@ classdef processor < handle
         end
         function colorCorrect(obj)
            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)))));
-           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', int2str(0)))));
-           reflectVal = zeros(obj.picNumber);
+           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatwhite', int2str(0)))));
+           reflectVal = zeros(1, obj.picNumber);
            counter = 1;
            while counter <= obj.picNumber
-               reflectVal(counter) = processor.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, reflect(:, :, counter));
-               img(:, :, counter) = uint16(uint64(img(:, :, counter)) * defaults.stdReflectance() / uint64(reflectVal(counter)));
+               reflectVal(counter) = obj.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, reflect(:, :, counter));
+               counter = counter + 1;
+           end
+           counter = 1;
+           while counter <= obj.picNumber
+               img(:, :, counter) = double(double(img(:, :, counter)) * defaults.stdReflectance() * max(reflectVal) / double(reflectVal(counter)));
                counter = counter + 1;
            end
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), 'img');
@@ -292,21 +299,20 @@ classdef processor < handle
            file = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, imgType, '0'))));
            enviwrite(file, defaults.ENVILocation(obj.saveLocation, obj.title, imgType, '0'));
         end
-    end
-    methods (Static)
-        function n = rectanglePixelAvg(minX, minY, maxX, maxY, img)
-            x = minX;
-            y = minY;
-            average = uint64(0);
-            while x <= maxX
-                while y <= maxY
-                    average = average + uint64(img(y, x));
+        function n = rectanglePixelAvg(obj, minX, minY, maxX, maxY, img)
+            binAmount = 1.0 / 2^obj.binNumber;
+            x = minX * binAmount;
+            y = minY * binAmount;
+            average = double(0);
+            while x <= maxX * binAmount
+                while y <= maxY * binAmount
+                    average = average + double(img(y, x));
                     y = y + 1;
                 end
                 y = minY;
                 x = x + 1;
             end
-            n = uint16(average / uint64((maxX - minX + 1) * (maxY - minY + 1)));
+            n = double(average / double((maxX * binAmount - minX *binAmount + 1) * (maxY * binAmount - minY * binAmount + 1)));
         end
     end
 end

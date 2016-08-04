@@ -168,19 +168,19 @@ classdef scanner < handle
         function picNumber = getPicNumber(obj)
             picNumber = obj.picNumber;
         end
-        function displaySettings(obj)
-            if obj.camera.isConnected() && obj.filter.isConnected()
-                msgbox({['Gain: ' num2str(obj.camera.getGain())]; ['Exposure Time: ' ...
-                    num2str(obj.camera.getExposure())]; ...
-                    ['Wavelength: ' num2str(obj.filter.getWavelength())]; ...
-                    ['Number: ' num2str(obj.picNumber)]; ...
-                    ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
-            elseif obj.filter.isConnected()
-                errordlg('Please Connect Camera First')
-            else
-                errordlg('Please Connect Filter First')
-            end
-        end
+%         function displaySettings(obj)
+%             if obj.camera.isConnected() && obj.filter.isConnected()
+%                 msgbox({['Gain: ' num2str(obj.camera.getGain())]; ['Exposure Time: ' ...
+%                     num2str(obj.camera.getExposure())]; ...
+%                     ['Wavelength: ' num2str(obj.filter.getWavelength())]; ...
+%                     ['Number: ' num2str(obj.picNumber)]; ...
+%                     ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
+%             elseif obj.filter.isConnected()
+%                 errordlg('Please Connect Camera First')
+%             else
+%                 errordlg('Please Connect Filter First')
+%             end
+%         end
         function appxFromWave(obj)
             obj.setGain(obj.gainCurve(obj.filter.getWavelength() - 399));
             obj.setExposure(obj.exposureCurve(obj.filter.getWavelength() - 399));

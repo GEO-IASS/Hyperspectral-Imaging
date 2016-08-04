@@ -13,6 +13,9 @@ classdef defaults
         function file = cubeLocation(location, title, setType, setNum)
             file = [location, title, '-', setType, '-', setNum, '.mat'];
         end
+        function cube = loadCube(location, title, setType, setNum)
+            cube = cell2mat(struct2cell(load(defaults.cubeLocation(location, title, setType, int2str(setNum)))));
+        end
         function file = ENVILocation(location, title, setType, setNum)
             file = [location, title, '-', setType, '-', setNum];
         end
