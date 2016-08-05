@@ -14,9 +14,14 @@ classdef processor < handle
         flatfieldGraph
         band
         reflectDisplay
+        graphMin
+        graphMax
+        step
     end
     methods
     	function obj = processor()
+            obj.graphMin = 400;
+            obj.graphMax = 720;
             obj.reflectDisplay = 0;
             obj.band = 550;
             obj.flatfieldGraph = 0;
@@ -25,17 +30,13 @@ classdef processor < handle
             obj.title = 'test';
             obj.picNumber = 33;
             obj.originalGraph = 0;
-%             obj.flatfieldAvgGraph = 0;
-%             obj.flatfieldGainGraph = 0;
-%             obj.percentGraph = 0;
             obj.X = 1;
             obj.Y = 1;
             obj.XRadius = 0;
             obj.YRadius = 0;
             obj.waveAxis = uint16(linspace(400, 720, 33));
-%             simpleGcurve = ones(1, 33) * 1;
-%             obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
             obj.binNumber = 0;
+            obj.step = 10;
         end
         function setTitle(obj, input)
             obj.title = input;
@@ -71,10 +72,12 @@ classdef processor < handle
             if (320/double(step)) == round((320/double(step)))
                 obj.picNumber = 1 + (320/step);
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
+                obj.step = step;
                 msgbox('Wavelength Step Modified')
             else
                 msgbox('Cannot Modify, Rounding to Closest Interval')
                 step = defaults.closestFactor(320, step);
+                obj.step = step;
                 obj.picNumber = (320/step) + 1;
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
                 msgbox(['Wavelength Step Modified:', int2str(step)])
@@ -83,10 +86,6 @@ classdef processor < handle
         function picNumber = getPicNumber(obj)
             picNumber = obj.picNumber;
         end
-%         function displaySettings(obj)
-%             msgbox({['Number: ' num2str(obj.picNumber)]; ...
-%                 ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
-%         end
         function avgProduction(obj)
     		obj.photoAvg('reg', 'avg');
             obj.photoAvg('dark', 'darkavg');
@@ -103,11 +102,12 @@ classdef processor < handle
                 img = double(img) + double(add);
                 counter = counter + 1;
             end
-            img = double(img) / double(obj.avgNumber);
+            img = double(img) / double(obj.avgNumber); %#ok<*NASGU>
             save(defaults.cubeLocation(obj.saveLocation, obj.title, newType, '0'), 'img');
         end
         function graph(obj)
-            values = zeros(1, obj.picNumber);
+            initialCounter = (obj.graphMin - 400)/obj.step + 1;
+            values = zeros(1, obj.picNumber - (720 - obj.graphMax)/obj.step - initialCounter);
             if obj.originalGraph == 1
                 img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', int2str(0)))));
             elseif obj.flatfieldGraph == 1
@@ -115,13 +115,12 @@ classdef processor < handle
             else
                 img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)))));
             end
-            counter = 1;
-            binAmount = 1.0/(2 ^ obj.binNumber);
-            while counter <= obj.picNumber
-                values(counter) = obj.rectanglePixelAvg((obj.X - obj.XRadius), (obj.Y - obj.YRadius), (obj.X + obj.XRadius), (obj.Y + obj.YRadius), img(:, :, counter));
+            counter = initialCounter;
+            while counter <= obj.picNumber - (720 - obj.graphMax)/obj.step
+                values(counter - initialCounter + 1) = obj.rectanglePixelAvg((obj.X - obj.XRadius), (obj.Y - obj.YRadius), (obj.X + obj.XRadius), (obj.Y + obj.YRadius), img(:, :, counter));
                 counter = counter + 1;
             end
-            plot(obj.waveAxis, values);
+            plot(obj.waveAxis((obj.graphMin - 400)/obj.step + 1:end - (720 - obj.graphMax)/obj.step), values);
             msgbox('Graph Completed')
         end
         function darkSeries(obj)
@@ -129,7 +128,7 @@ classdef processor < handle
            darkimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'))));
            white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'))));
            %reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectbin', '0'))));
-           darksub = img; - darkimg;
+           darksub = img; - darkimg; %#ok<*VUNUS>
            darkwhite = white; - darkimg;
            %darkreflect = reflect - darkimg;
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), 'darksub');
@@ -142,7 +141,7 @@ classdef processor < handle
             %reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
             white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'))));
             trueLight = repmat(max(max(white)), 520 * double(1.0/(2^obj.binNumber)), 696 *  double(1.0/(2^obj.binNumber)));
-            img = double(double(img) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
+            img = double(double(img) ./ double(white) .* double(trueLight) * double(defaults.flatConstant()));
             white = double(double(white) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
             %reflect = uint16(uint64(reflect) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), 'img');
@@ -232,6 +231,20 @@ classdef processor < handle
         function setBand(obj, value)
             obj.band = value;
             msgbox('Band Modified')
+        end
+        function value = getGraphMin(obj)
+            value = obj.graphMin;
+        end
+        function setGraphMin(obj, value)
+            obj.graphMin = value;
+            msgbox('Graphing Minimum Modified')
+        end
+        function value = getGraphMax(obj)
+            value = obj.graphMax;
+        end
+        function setGraphMax(obj, value)
+            obj.graphMax = value;
+            msgbox('Graphing Maximum Modified')
         end
         function value = getReflectDisplay(obj)
             value = obj.reflectDisplay;

@@ -141,11 +141,11 @@ classdef scanner < handle
                     for picID=1:length(obj.waveAxis)
                         %Set gain
                         obj.setGain(obj.gainCurve(obj.waveAxis(picID)-399));
-		        set(handles.gainText, 'String', ['Gain: ', int2str(camera.getGain())]);		
+		        set(handles.gainText, 'String', ['Gain: ', int2str(obj.camera.getGain())]);		
                         obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399));     
-		        set(handles.exposureText, 'String', ['Exposure Time: ', int2str(camera.getExposure())]);		
+		        set(handles.exposureText, 'String', ['Exposure Time: ', int2str(obj.camera.getExposure())]);		
                         obj.setWavelength(obj.waveAxis(picID)); 
-		        set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(filter.getWavelength())]);		
+		        set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(obj.filter.getWavelength())]);		
                         obj.takePicture(setType, setNum + 1);
                     end
                     setNum = setNum + 1;
@@ -171,19 +171,6 @@ classdef scanner < handle
         function picNumber = getPicNumber(obj)
             picNumber = obj.picNumber;
         end
-%         function displaySettings(obj)
-%             if obj.camera.isConnected() && obj.filter.isConnected()
-%                 msgbox({['Gain: ' num2str(obj.camera.getGain())]; ['Exposure Time: ' ...
-%                     num2str(obj.camera.getExposure())]; ...
-%                     ['Wavelength: ' num2str(obj.filter.getWavelength())]; ...
-%                     ['Number: ' num2str(obj.picNumber)]; ...
-%                     ['Title: ' obj.title]; ['Location: ' obj.saveLocation];})
-%             elseif obj.filter.isConnected()
-%                 errordlg('Please Connect Camera First')
-%             else
-%                 errordlg('Please Connect Filter First')
-%             end
-%         end
         function appxFromWave(obj)
             obj.setGain(obj.gainCurve(obj.filter.getWavelength() - 399));
             obj.setExposure(obj.exposureCurve(obj.filter.getWavelength() - 399));
