@@ -133,7 +133,7 @@ classdef scanner < handle
         function title = getTitle(obj)
             title = obj.title;
         end
-        function takeSet(obj, setType)
+        function takeSet(obj, setType, handles)
             if obj.camera.isConnected() && obj.filter.isConnected()
                 setNum = 0;
                 while(setNum < obj.avgNumber)
@@ -141,8 +141,11 @@ classdef scanner < handle
                     for picID=1:length(obj.waveAxis)
                         %Set gain
                         obj.setGain(obj.gainCurve(obj.waveAxis(picID)-399));
+		        set(handles.gainText, 'String', ['Gain: ', int2str(camera.getGain())]);		
                         obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399));     
+		        set(handles.exposureText, 'String', ['Exposure Time: ', int2str(camera.getExposure())]);		
                         obj.setWavelength(obj.waveAxis(picID)); 
+		        set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(filter.getWavelength())]);		
                         obj.takePicture(setType, setNum + 1);
                     end
                     setNum = setNum + 1;

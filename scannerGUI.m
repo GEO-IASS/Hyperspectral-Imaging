@@ -38,7 +38,7 @@ end
 % --- Executes on button press in darkReference.
 function darkReference_Callback(hObject, eventdata, handles) %#ok<*DEFNU,*INUSD>
     global scannerObj;
-    scannerObj.takeSet('dark')
+    scannerObj.takeSet('dark', handles)
     msgbox('Dark Set Taken and Saved')
 end
 
@@ -66,7 +66,7 @@ end
 % --- Executes on button press in imageSeries.
 function imageSeries_Callback(hObject, eventdata, handles)
     global scannerObj;
-    scannerObj.takeSet('reg');
+    scannerObj.takeSet('reg', handles);
     msgbox('Image Series Taken and Saved')
 end
 
@@ -75,6 +75,7 @@ function exposure_Callback(hObject, eventdata, handles)
     input = str2double(get(hObject, 'String'));
     scannerObj.setExposure(input);
     msgbox('Exposure Time Modified')
+    set(handles.exposureText, 'String', ['Exposure Time: ', int2str(scannerObj.camera.getExposure())]);
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -89,6 +90,7 @@ function wavelength_Callback(hObject, eventdata, handles)
     input = str2double(get(hObject, 'String'));
     scannerObj.setWavelength(input)
     msgbox('Wavelength Modified')
+    set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(scannerObj.filter.getWavelength())]);
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -116,6 +118,7 @@ function gain_Callback(hObject, eventdata, handles)
     input = str2double(get(hObject, 'String'));
     scannerObj.setGain(input);
     msgbox('Gain Modified')
+    set(handles.gainText, 'String', ['Gain: ', int2str(scannerObj.camera.getGain())]);
 end
 
 function constantSettings_Callback(hObject, eventdata, handles)
@@ -168,6 +171,8 @@ end
 function approximateFromWavelength_Callback(hObject, eventdata, handles)
     global scannerObj;
     scannerObj.appxFromWave();
+    set(handles.gainText, 'String', ['Exposure Time: ', int2str(scannerObj.camera.getExposure())]);
+    set(handles.exposureText, 'String', ['Gain: ', int2str(scannerObj.camera.getGain())]);
 end
 
 % % --- Executes on button press in displaySettings.
@@ -192,14 +197,14 @@ end
 % --- Executes on button press in whiteReference.
 function whiteReference_Callback(hObject, eventdata, handles)
     global scannerObj;
-    scannerObj.takeSet('white')
+    scannerObj.takeSet('white', handles)
     msgbox('White Reference Series Taken and Saved')
 end
 
 % --- Executes on button press in whiteReference.
 function reflectanceStd_Callback(hObject, eventdata, handles)
     global scannerObj;
-    scannerObj.takeSet('reflect')
+    scannerObj.takeSet('reflect', handles)
     msgbox('Reflectance Standard Series Taken and Saved')
 end
 
@@ -773,7 +778,7 @@ function h1 = scannerGUI_LayoutFcn(policy)
     'CreateFcn', {@local_CreateFcn, blanks(0), appdata} );
 
     appdata = [];
-    appdata.lastValidTag = 'waveText';
+    appdata.lastValidTag = 'wavelengthText';
 
     h34 = uicontrol(...
     'Parent',h33,...
