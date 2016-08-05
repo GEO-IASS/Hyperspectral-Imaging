@@ -251,7 +251,7 @@ classdef processor < handle
            end
            counter = 1;
            while counter <= obj.picNumber
-               img(:, :, counter) = double(double(img(:, :, counter)) * defaults.stdReflectance() * max(reflectVal) / double(reflectVal(counter)));
+               img(:, :, counter) = double(double(img(:, :, counter)) * defaults.stdReflectance() / double(reflectVal(counter)));
                counter = counter + 1;
            end
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), 'img');
