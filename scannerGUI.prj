@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="364400654" file="C:\Users\londep\PMet\scannerGUI.prj" location="C:\Users\londep\PMet" name="scannerGUI" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="1000762424" file="C:\Users\londep\Hyperspectral-Imaging\scannerGUI.prj" location="C:\Users\londep\Hyperspectral-Imaging" name="scannerGUI" target="target.mlapps" target-name="Package App">
     <param.appname>scannerGUI</param.appname>
     <param.authnamewatermark>Avery Karlin</param.authnamewatermark>
     <param.email>averykarlin3@gmail.com</param.email>
@@ -9,14 +9,14 @@
     <param.summary />
     <param.description />
     <param.screenshot />
-    <param.version>1.0</param.version>
+    <param.version>2.0</param.version>
     <param.products.name />
     <param.products.id />
     <param.products.version />
     <param.platforms>
       <item>win64</item>
     </param.platforms>
-    <param.output>C:\Users\londep\PMet</param.output>
+    <param.output>C:\Users\londep\Hyperspectral-Imaging</param.output>
     <param.guid>e41553ad-17c7-40e1-9e9e-2cf0a9e1bfc3</param.guid>
     <unset>
       <param.icon />
@@ -24,7 +24,6 @@
       <param.summary />
       <param.description />
       <param.screenshot />
-      <param.version />
       <param.products.name />
       <param.products.id />
       <param.products.version />
@@ -53,7 +52,7 @@
     <fileset.resources />
     <fileset.package />
     <build-deliverables>
-      <file location="C:\Users\londep" name="PMet" optional="false">C:\Users\londep\PMet</file>
+      <file location="C:\Users\londep" name="Hyperspectral-Imaging" optional="false">C:\Users\londep\Hyperspectral-Imaging</file>
     </build-deliverables>
     <workflow />
     <matlab>
