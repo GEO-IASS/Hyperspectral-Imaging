@@ -90,7 +90,7 @@ classdef processor < handle
     		obj.photoAvg('reg', 'avg');
             obj.photoAvg('dark', 'darkavg');
             obj.photoAvg('white', 'whiteavg');
-            %obj.photoAvg('reflect', 'reflectavg');
+            obj.photoAvg('reflect', 'reflectavg');
             msgbox('Series Averaging Completed')
         end
         function photoAvg(obj, picType, newType)
@@ -127,23 +127,23 @@ classdef processor < handle
            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'bin', '0'))));
            darkimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'))));
            white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'))));
-           %reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectbin', '0'))));
+           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectbin', '0'))));
            darksub = img; - darkimg; %#ok<*VUNUS>
            darkwhite = white; - darkimg;
-           %darkreflect = reflect - darkimg;
+           darkreflect = reflect - darkimg;
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), 'darksub');
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'), 'darkwhite');
-           %save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), 'darkreflect');
+           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), 'darkreflect');
            msgbox('Dark Subtract Series Completed')
         end
         function flatFieldSeries(obj)
             img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'))));
-            %reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
+            reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
             white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'))));
             trueLight = repmat(max(max(white)), 520 * double(1.0/(2^obj.binNumber)), 696 *  double(1.0/(2^obj.binNumber)));
             img = double(double(img) ./ double(white) .* double(trueLight) * double(defaults.flatConstant()));
-            white = double(double(white) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
-            %reflect = uint16(uint64(reflect) .* uint64(trueLight) * uint64(defaults.flatConstant()) ./ uint64(white));
+            %white = double(double(white) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
+            reflect = double(double(reflect) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), 'img');
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatwhite', '0'), 'white');
             msgbox('Flat Field Series Completed')
@@ -287,7 +287,7 @@ classdef processor < handle
                convertToCube(obj, 'reg', counter);
                convertToCube(obj, 'dark', counter);
                convertToCube(obj, 'white', counter);
-               %convertToCube(obj, 'reflect', counter);
+               convertToCube(obj, 'reflect', counter);
                counter = counter + 1;
            end
            msgbox('Data Converted to .mat Data Cubes')
@@ -296,16 +296,17 @@ classdef processor < handle
            obj.ENVI('avg');
            obj.ENVI('darkavg');
            obj.ENVI('whiteavg');
-           %obj.ENVI('reflectavg');
+           obj.ENVI('reflectavg');
            obj.ENVI('bin');
            obj.ENVI('whitebin');
            obj.ENVI('darkbin');
            obj.ENVI('flatfield');
-           %obj.ENVI('flatreflect');
+           obj.ENVI('flatreflect');
            obj.ENVI('correct');
            obj.ENVI('darkwhite');
-           %obj.ENVI('darkreflect');
+           obj.ENVI('darkreflect');
            obj.ENVI('darksub');
+           obj.ENVI('reflectbin');
            msgbox('Data Cubes Converted to ENVI')
         end
         function ENVI(obj, imgType)
