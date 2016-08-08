@@ -10,6 +10,7 @@ classdef scanner < handle
         gainCurve
         exposureCurve
         constantSettings
+        step
     end
     methods
         function obj = scanner()
@@ -18,6 +19,7 @@ classdef scanner < handle
             obj.filter = filter();
             obj.saveLocation = 'C:/';
             obj.title = 'test';
+            obj.step = 10;
             obj.picNumber = 33;
             % Set default gain curve
             simpleGcurve=[30.0 26.0 22.0 18.0 14.0 10.0 8.0 6.0 4.0 ...
@@ -156,16 +158,19 @@ classdef scanner < handle
                 errordlg('Please Connect Filter First')
             end
         end
-        function setPicNumber(obj, picNumber)
-            if (320/double(picNumber - 1)) == round((320/double(picNumber - 1)))
-                obj.picNumber = picNumber;
+        function setPicNumber(obj, step)
+            if (320/double(step)) == round((320/double(step)))
+                obj.picNumber = 1 + (320/step);
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
-                msgbox('Picture Number Modified')
+                obj.step = step;
+                msgbox('Wavelength Step Modified')
             else
                 msgbox('Cannot Modify, Rounding to Closest Interval')
-                obj.picNumber = defaults.closestFactor(320, picNumber - 1) + 1;
+                step = defaults.closestFactor(320, step);
+                obj.step = step;
+                obj.picNumber = (320/step) + 1;
                 obj.waveAxis = uint16(linspace(400, 720, obj.picNumber));
-                msgbox(['Picture Number Modified:', int2str(obj.picNumber)])
+                msgbox(['Wavelength Step Modified:', int2str(step)])
             end
         end
         function picNumber = getPicNumber(obj)

@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1000762424" file="C:\Users\londep\Hyperspectral-Imaging\scannerGUI.prj" location="C:\Users\londep\Hyperspectral-Imaging" name="scannerGUI" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="1390955686" file="C:\Users\londep\Hyperspectral-Imaging\scannerGUI.prj" location="C:\Users\londep\Hyperspectral-Imaging" name="scannerGUI" target="target.mlapps" target-name="Package App">
     <param.appname>scannerGUI</param.appname>
     <param.authnamewatermark>Avery Karlin</param.authnamewatermark>
     <param.email>averykarlin3@gmail.com</param.email>
