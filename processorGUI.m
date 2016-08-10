@@ -159,7 +159,7 @@ end
 function imageDisplay_Callback(hObject, eventdata, handles)
     global processorObj;
     if processorObj.getReflectDisplay()
-        img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'white', int2str(processorObj.getBand()), int2str(1)));
+        img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'reflect', int2str(processorObj.getBand()), int2str(1)));
     else
         img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'reg', int2str(processorObj.getBand()), int2str(1)));
     end
