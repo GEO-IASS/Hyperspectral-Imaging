@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="821710280" file="C:\Users\londep\Hyperspectral-Imaging\processorGUI.prj" location="C:\Users\londep\Hyperspectral-Imaging" name="processorGUI" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="4164470706" file="C:\Users\londep\Hyperspectral-Imaging\processorGUI.prj" location="C:\Users\londep\Hyperspectral-Imaging" name="processorGUI" target="target.mlapps" target-name="Package App">
     <param.appname>processorGUI</param.appname>
     <param.authnamewatermark>Avery Karlin</param.authnamewatermark>
     <param.email>averykarlin3@gmail.com</param.email>
@@ -9,7 +9,7 @@
     <param.summary />
     <param.description />
     <param.screenshot />
-    <param.version>2.0</param.version>
+    <param.version>2.1</param.version>
     <param.products.name />
     <param.products.id />
     <param.products.version />

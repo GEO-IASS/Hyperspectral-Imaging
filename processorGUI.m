@@ -158,21 +158,10 @@ end
 % --- Executes on button press in percentGraph.
 function imageDisplay_Callback(hObject, eventdata, handles)
     global processorObj;
-    if processorObj.getReflectDisplay()
-        img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'reflect', int2str(processorObj.getBand()), int2str(1)));
-    else
-        img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'reg', int2str(processorObj.getBand()), int2str(1)));
-    end
+    img = imread(defaults.defaultLocation(processorObj.getSaveLocation(), processorObj.getTitle(), 'reg', int2str(processorObj.getBand()), int2str(1)));
     axes(handles.graphAxes), cla;
     imagesc(img), colormap (gray)
     axis image;
-end
-
-% --- Executes on button press in reflectDisplay.
-function reflectDisplay_Callback(hObject, eventdata, handles)
-    global processorObj;
-    input = get(hObject, 'Value');
-    processorObj.setReflectDisplay(input);    
 end
 
 % --- Executes on button press in flatfieldGraph.
@@ -891,21 +880,6 @@ function h1 = processorGUI_LayoutFcn(policy)
     'Position',[72.6 22.5384615384615 56.2 11.23076923076923],...
     'Clipping','off',...
     'Tag','uipanel6',...
-    'CreateFcn', {@local_CreateFcn, blanks(0), appdata} );
-
-    appdata = [];
-    appdata.lastValidTag = 'reflectDisplay';
-
-    h21 = uicontrol(...
-    'Parent',h19,...
-    'FontUnits',get(0,'defaultuicontrolFontUnits'),...
-    'Units','characters',...
-    'String','Reflect Display',...
-    'Style','checkbox',...
-    'Position',[30.8 3.30769230769231 18.2 1.76923076923077],...
-    'Callback',@(hObject,eventdata)processorGUI('reflectDisplay_Callback',hObject,eventdata,guidata(hObject)),...
-    'Children',[],...
-    'Tag','reflectDisplay',...
     'CreateFcn', {@local_CreateFcn, blanks(0), appdata} );
 
     appdata = [];

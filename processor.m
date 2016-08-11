@@ -13,7 +13,6 @@ classdef processor < handle
         binNumber
         flatfieldGraph
         band
-        reflectDisplay
         graphMin
         graphMax
         step
@@ -22,7 +21,6 @@ classdef processor < handle
     	function obj = processor()
             obj.graphMin = 400;
             obj.graphMax = 720;
-            obj.reflectDisplay = 0;
             obj.band = 550;
             obj.flatfieldGraph = 0;
             obj.avgNumber = 2;
@@ -90,7 +88,6 @@ classdef processor < handle
     		obj.photoAvg('reg', 'avg');
             obj.photoAvg('dark', 'darkavg');
             obj.photoAvg('white', 'whiteavg');
-            obj.photoAvg('reflect', 'reflectavg');
             msgbox('Series Averaging Completed')
         end
         function photoAvg(obj, picType, newType)
@@ -127,25 +124,18 @@ classdef processor < handle
            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'bin', '0'))));
            darkimg = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkbin', '0'))));
            white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'whitebin', '0'))));
-           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'reflectbin', '0'))));
            darksub = img; - darkimg; %#ok<*VUNUS>
            darkwhite = white; - darkimg;
-           darkreflect = reflect - darkimg;
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'), 'darksub');
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'), 'darkwhite');
-           save(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'), 'darkreflect');
            msgbox('Dark Subtract Series Completed')
         end
         function flatFieldSeries(obj)
             img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darksub', '0'))));
-            reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkreflect', '0'))));
             white = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'darkwhite', '0'))));
             trueLight = repmat(max(max(white)), 520 * double(1.0/(2^obj.binNumber)), 696 *  double(1.0/(2^obj.binNumber)));
             img = double(double(img) ./ double(white) .* double(trueLight) * double(defaults.flatConstant()));
-            %white = double(double(white) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
-            reflect = double(double(reflect) .* double(trueLight) * double(defaults.flatConstant()) ./ double(white));
             save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', '0'), 'img');
-            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatwhite', '0'), 'white');
             msgbox('Flat Field Series Completed')
         end
         function binSeries(obj)
@@ -246,20 +236,12 @@ classdef processor < handle
             obj.graphMax = value;
             msgbox('Graphing Maximum Modified')
         end
-        function value = getReflectDisplay(obj)
-            value = obj.reflectDisplay;
-        end
-        function setReflectDisplay(obj, value)
-            obj.reflectDisplay = value;
-            msgbox('Reflect Display Modified')
-        end
         function colorCorrect(obj)
            img = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatfield', int2str(0)))));
-           reflect = cell2mat(struct2cell(load(defaults.cubeLocation(obj.saveLocation, obj.title, 'flatwhite', int2str(0)))));
            reflectVal = zeros(1, obj.picNumber);
            counter = 1;
            while counter <= obj.picNumber
-               reflectVal(counter) = obj.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, reflect(:, :, counter));
+               reflectVal(counter) = obj.rectanglePixelAvg(obj.X - obj.XRadius, obj.Y - obj.YRadius, obj.X + obj.XRadius, obj.Y + obj.YRadius, img(:, :, counter));
                counter = counter + 1;
            end
            counter = 1;
@@ -287,7 +269,6 @@ classdef processor < handle
                convertToCube(obj, 'reg', counter);
                convertToCube(obj, 'dark', counter);
                convertToCube(obj, 'white', counter);
-               convertToCube(obj, 'reflect', counter);
                counter = counter + 1;
            end
            msgbox('Data Converted to .mat Data Cubes')
@@ -296,17 +277,13 @@ classdef processor < handle
            obj.ENVI('avg');
            obj.ENVI('darkavg');
            obj.ENVI('whiteavg');
-           obj.ENVI('reflectavg');
            obj.ENVI('bin');
            obj.ENVI('whitebin');
            obj.ENVI('darkbin');
            obj.ENVI('flatfield');
-           obj.ENVI('flatreflect');
            obj.ENVI('correct');
            obj.ENVI('darkwhite');
-           obj.ENVI('darkreflect');
            obj.ENVI('darksub');
-           obj.ENVI('reflectbin');
            msgbox('Data Cubes Converted to ENVI')
         end
         function ENVI(obj, imgType)
