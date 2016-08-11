@@ -73,6 +73,14 @@ classdef camera < handle
                 errordlg('Camera Not Connected')
             end
         end
+        function value = getCam(obj)
+            value = obj.cam;
+        end
+        function autoSetExposure(obj)
+            [lw,lh]=LucamGetFrameSize(obj.cam);
+            LucamOneShotAutoExposure(lh, lw, 0, 0, 127, obj.cam);
+            obj.exposure = LucamGetExposure(obj.cam);
+        end
     end
     methods (Static)
         function portErr()

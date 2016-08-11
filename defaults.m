@@ -13,6 +13,21 @@ classdef defaults
         function file = cubeLocation(location, title, setType, setNum)
             file = [location, title, '-', setType, '-', setNum, '.mat'];
         end
+        function value = getSimpleGcurve()
+            % Set default gain curve
+%             value=[30.0 26.0 22.0 18.0 14.0 10.0 8.0 6.0 4.0 ...
+%             3.0 2.0 1.8 1.6 1.4 1.2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
+              value = ones(33);
+        end
+        function value = getSimpleEcurve()
+            %Set default exposure curve in ms
+%             value=[1000 1000 1000 1000 1000 1000 900 800 700 600 ...
+%             500 400 300 200 150 150 150 150 150 150 150 150 150 150 150 ...
+%             150 150 150 150 150 150 150 150];
+            value=[600 600 600 600 600 600 600 600 600 200 ...
+            200 200 200 200 100 100 100 100 100 100 100 100 100 100 100 ...
+            100 100 100 100 100 100 100 100];
+        end
         function cube = loadCube(location, title, setType, setNum)
             cube = cell2mat(struct2cell(load(defaults.cubeLocation(location, title, setType, int2str(setNum)))));
         end

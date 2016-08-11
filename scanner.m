@@ -21,16 +21,9 @@ classdef scanner < handle
             obj.title = 'test';
             obj.step = 10;
             obj.picNumber = 33;
-            % Set default gain curve
-            simpleGcurve=[30.0 26.0 22.0 18.0 14.0 10.0 8.0 6.0 4.0 ...
-            3.0 2.0 1.8 1.6 1.4 1.2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
-            %Set default exposure curve in ms
-            simpleEcurve=[1000 1000 1000 1000 1000 1000 900 800 700 600 ...
-            500 400 300 200 150 150 150 150 150 150 150 150 150 150 150 ...
-            150 150 150 150 150 150 150 150];
             %Intrapolate extended gain and exposure curves
-            obj.exposureCurve = interp1(simpleEcurve, 1:0.1:33);
-            obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
+            obj.exposureCurve = interp1(defaults.getSimpleEcurve(), 1:0.1:33);
+            obj.gainCurve = interp1(defaults.getSimpleGcurve(), 1:0.1:33);
             obj.waveAxis = linspace(400, 720, 33);
             obj.waveAxis = uint16(obj.waveAxis);
             obj.constantSettings = 0;
@@ -141,13 +134,13 @@ classdef scanner < handle
                 while(setNum < obj.avgNumber)
                     pause(defaults.longdelay());
                     for picID=1:length(obj.waveAxis)
-                        %Set gain
                         obj.setGain(obj.gainCurve(obj.waveAxis(picID)-399));
-		        set(handles.gainText, 'String', ['Gain: ', int2str(obj.camera.getGain())]);		
-                        obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399));     
-		        set(handles.exposureText, 'String', ['Exposure Time: ', int2str(obj.camera.getExposure())]);		
+                        set(handles.gainText, 'String', ['Gain: ', int2str(obj.camera.getGain())]);		
+                        obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399));
+%                         obj.camera.autoSetExposure();
+                        set(handles.exposureText, 'String', ['Exposure Time: ', int2str(obj.camera.getExposure())]);		
                         obj.setWavelength(obj.waveAxis(picID)); 
-		        set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(obj.filter.getWavelength())]);		
+                        set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(obj.filter.getWavelength())]);		
                         obj.takePicture(setType, setNum + 1);
                     end
                     setNum = setNum + 1;
@@ -197,12 +190,9 @@ classdef scanner < handle
                 obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
             else
                 % Set default gain curve
-                simpleGcurve=[30.0 26.0 22.0 18.0 14.0 10.0 8.0 6.0 4.0 ...
-                3.0 2.0 1.8 1.6 1.4 1.2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
+                simpleGcurve= defaults.getSimpleGcurve();
                 %Set default exposure curve in ms
-                simpleEcurve=[1000 1000 1000 1000 1000 1000 900 800 700 600 ...
-                500 400 300 200 150 150 150 150 150 150 150 150 150 150 150 ...
-                150 150 150 150 150 150 150 150];
+                simpleEcurve= defaults.getSimpleEcurve();
                 %Intrapolate extended gain and exposure curves
                 obj.exposureCurve = interp1(simpleEcurve, 1:0.1:33);
                 obj.gainCurve = interp1(simpleGcurve, 1:0.1:33);
