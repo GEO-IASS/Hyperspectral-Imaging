@@ -52,10 +52,6 @@ classdef scanner < handle
         function setExposure(obj, exposure)
             if ~obj.camera.isConnected()
                 errordlg('Camera Not Connected')
-            elseif isnan(exposure)
-                errordlg('Exposure value must be a number')
-            elseif exposure < 0 || exposure > 1000
-                errordlg('Exposure value must be within 0 to 1000 ms inclusive.')
             else
                 obj.camera.setExposure(exposure);
                 if obj.constantSettings
@@ -67,10 +63,6 @@ classdef scanner < handle
         function setGain(obj, gain)
             if ~obj.camera.isConnected()
                 errordlg('Camera Not Connected')
-            elseif isnan(gain)
-                errordlg('Gain value must be a number')
-            elseif gain < 0 || gain > 30
-                errordlg('Gain value must be within 0 to 30 inclusive.')
             else
                 obj.camera.setGain(gain);
                 if obj.constantSettings
@@ -136,8 +128,8 @@ classdef scanner < handle
                     for picID=1:length(obj.waveAxis)
                         obj.setGain(obj.gainCurve(obj.waveAxis(picID)-399));
                         set(handles.gainText, 'String', ['Gain: ', int2str(obj.camera.getGain())]);		
-                        obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399));
-%                         obj.camera.autoSetExposure();
+                        obj.setExposure(obj.exposureCurve(obj.waveAxis(picID) - 399)); %Without Auto
+%                         obj.camera.autoSetExposure(); %With Auto
                         set(handles.exposureText, 'String', ['Exposure Time: ', int2str(obj.camera.getExposure())]);		
                         obj.setWavelength(obj.waveAxis(picID)); 
                         set(handles.wavelengthText, 'String', ['Wavelength: ', int2str(obj.filter.getWavelength())]);		

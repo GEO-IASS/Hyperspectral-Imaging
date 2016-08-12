@@ -246,7 +246,7 @@ classdef processor < handle
            end
            counter = 1;
            while counter <= obj.picNumber
-               img(:, :, counter) = double(double(img(:, :, counter)) * defaults.stdReflectance() / double(reflectVal(counter)));
+               img(:, :, counter) = double(double(img(:, :, counter)) * defaults.stdReflectance() / double(100 * reflectVal(counter)));
                counter = counter + 1;
            end
            save(defaults.cubeLocation(obj.saveLocation, obj.title, 'correct', int2str(0)), 'img');
@@ -300,10 +300,10 @@ classdef processor < handle
                     average = average + double(img(y, x));
                     y = y + 1;
                 end
-                y = minY;
+                y = minY * binAmount;
                 x = x + 1;
             end
-            n = double(average / double((maxX * binAmount - minX *binAmount + 1) * (maxY * binAmount - minY * binAmount + 1)));
+            n = double(average / double((maxX - minX + 1) * (maxY - minY + 1) * binAmount * binAmount));
         end
     end
 end
